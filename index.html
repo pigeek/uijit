@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>uijit - UI Just-In-Time</title>
+  <meta name="description" content="Cast AI-generated visualizations to your TV in real-time">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📺</text></svg>">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      color: #ffffff;
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    header {
+      text-align: center;
+      padding: 4rem 0;
+    }
+
+    .logo {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+    }
+
+    h1 {
+      font-size: 3rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(90deg, #e94560, #ff6b6b);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .tagline {
+      font-size: 1.25rem;
+      color: #a0a0c0;
+      margin-bottom: 2rem;
+    }
+
+    .hero-description {
+      font-size: 1.1rem;
+      color: #c0c0d0;
+      max-width: 600px;
+      margin: 0 auto 3rem;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 4rem;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 1.5rem;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 40px rgba(233, 69, 96, 0.2);
+    }
+
+    .card-icon {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+
+    .card h3 {
+      font-size: 1.25rem;
+      margin-bottom: 0.5rem;
+      color: #ffffff;
+    }
+
+    .card p {
+      color: #a0a0c0;
+      font-size: 0.95rem;
+    }
+
+    .flow-section {
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 16px;
+      padding: 2rem;
+      margin-bottom: 4rem;
+    }
+
+    .flow-section h2 {
+      text-align: center;
+      margin-bottom: 2rem;
+      color: #e94560;
+    }
+
+    .flow {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .flow-step {
+      text-align: center;
+      flex: 1;
+      min-width: 120px;
+    }
+
+    .flow-step-icon {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .flow-step-label {
+      font-size: 0.9rem;
+      color: #a0a0c0;
+    }
+
+    .flow-arrow {
+      color: #e94560;
+      font-size: 1.5rem;
+    }
+
+    .cta-section {
+      text-align: center;
+      padding: 3rem 0;
+    }
+
+    .cta-section h2 {
+      margin-bottom: 1rem;
+    }
+
+    .cta-section p {
+      color: #a0a0c0;
+      margin-bottom: 2rem;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 0.875rem 2rem;
+      background: linear-gradient(90deg, #e94560, #ff6b6b);
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 600;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(233, 69, 96, 0.4);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      margin-left: 1rem;
+    }
+
+    .btn-secondary:hover {
+      border-color: #e94560;
+      box-shadow: 0 6px 20px rgba(233, 69, 96, 0.2);
+    }
+
+    code {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 0.9rem;
+    }
+
+    footer {
+      text-align: center;
+      padding: 2rem 0;
+      color: #606080;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    footer a {
+      color: #a0a0c0;
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      color: #e94560;
+    }
+
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 2rem;
+      }
+
+      .flow {
+        flex-direction: column;
+      }
+
+      .flow-arrow {
+        transform: rotate(90deg);
+      }
+
+      .btn-secondary {
+        margin-left: 0;
+        margin-top: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo">📺</div>
+      <h1>uijit</h1>
+      <p class="tagline">UI Just-In-Time</p>
+      <p class="hero-description">
+        Cast AI-generated visualizations to your Chromecast and Google TV devices in real-time. 
+        Transform any screen into a dynamic canvas for your AI assistant.
+      </p>
+    </header>
+
+    <div class="cards">
+      <div class="card">
+        <div class="card-icon">🎨</div>
+        <h3>Dynamic Visualizations</h3>
+        <p>Display charts, dashboards, and rich UI components generated by AI agents using the A2UI protocol.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">⚡</div>
+        <h3>Real-Time Updates</h3>
+        <p>WebSocket-powered streaming ensures your TV display updates instantly as the AI generates content.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">📡</div>
+        <h3>Local Network</h3>
+        <p>Your data stays on your network. The receiver connects directly to your local Canvas Server.</p>
+      </div>
+    </div>
+
+    <div class="flow-section">
+      <h2>How It Works</h2>
+      <div class="flow">
+        <div class="flow-step">
+          <div class="flow-step-icon">🤖</div>
+          <div class="flow-step-label">AI Agent<br>generates UI</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">
+          <div class="flow-step-icon">🖥️</div>
+          <div class="flow-step-label">Canvas Server<br>(local)</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">
+          <div class="flow-step-icon">📺</div>
+          <div class="flow-step-label">uijit Receiver<br>(this service)</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">
+          <div class="flow-step-icon">🏠</div>
+          <div class="flow-step-label">Your TV<br>(Chromecast)</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cta-section">
+      <h2>Get Started</h2>
+      <p>The Canvas Receiver is ready to use. Point your Cast sender to:</p>
+      <p><code>https://uijit.github.io/canvas-receiver/</code></p>
+      <br>
+      <a href="https://github.com/uijit/uijit.github.io" class="btn">View on GitHub</a>
+      <a href="./canvas-receiver/" class="btn btn-secondary">Receiver App</a>
+    </div>
+
+    <footer>
+      <p>
+        Part of the <a href="https://github.com/user/nanobot">nanobot</a> ecosystem
+        · <a href="https://github.com/uijit/uijit.github.io">Source</a>
+        · MIT License
+      </p>
+    </footer>
+  </div>
+</body>
+</html>

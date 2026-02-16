@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Canvas Receiver - uijit</title>
+  
+  <!-- Google Cast Receiver SDK (must be from gstatic) -->
+  <script src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a2e;
+      color: #ffffff;
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    /* Status screen shown while waiting for connection */
+    #status {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      text-align: center;
+      padding: 48px;
+    }
+
+    #status.hidden {
+      display: none;
+    }
+
+    .status-logo {
+      font-size: 96px;
+      margin-bottom: 32px;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.7; transform: scale(0.95); }
+    }
+
+    .status-title {
+      font-size: 48px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      background: linear-gradient(90deg, #e94560, #ff6b6b);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .status-message {
+      font-size: 24px;
+      color: #a0a0c0;
+      margin-bottom: 32px;
+    }
+
+    .status-spinner {
+      width: 48px;
+      height: 48px;
+      border: 4px solid rgba(233, 69, 96, 0.2);
+      border-top-color: #e94560;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .status-error {
+      color: #e94560;
+    }
+
+    .status-info {
+      margin-top: 48px;
+      font-size: 18px;
+      color: #606080;
+    }
+
+    /* Canvas container for A2UI rendering */
+    #canvas {
+      width: 100vw;
+      height: 100vh;
+      overflow: auto;
+    }
+
+    #canvas.hidden {
+      display: none;
+    }
+
+    /* A2UI Component Styles */
+    .a2ui-column {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .a2ui-row {
+      display: flex;
+      flex-direction: row;
+    }
+
+    .a2ui-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 24px;
+    }
+
+    .a2ui-text {
+      color: #ffffff;
+    }
+
+    .a2ui-image {
+      max-width: 100%;
+      border-radius: 8px;
+    }
+
+    .a2ui-list {
+      list-style: none;
+    }
+
+    .a2ui-list-item {
+      padding: 16px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .a2ui-list-item:last-child {
+      border-bottom: none;
+    }
+
+    /* Debug panel (hidden by default) */
+    #debug {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(0, 0, 0, 0.8);
+      color: #00ff00;
+      font-family: monospace;
+      font-size: 14px;
+      padding: 16px;
+      max-height: 200px;
+      overflow-y: auto;
+      display: none;
+    }
+
+    #debug.visible {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <!-- Status screen -->
+  <div id="status">
+    <div class="status-logo">📺</div>
+    <h1 class="status-title">uijit Canvas</h1>
+    <p id="status-message" class="status-message">Waiting for connection...</p>
+    <div id="status-spinner" class="status-spinner"></div>
+    <p class="status-info">Canvas Receiver v1.0</p>
+  </div>
+
+  <!-- Canvas for A2UI rendering -->
+  <div id="canvas" class="hidden"></div>
+
+  <!-- Debug panel -->
+  <div id="debug"></div>
+
+  <script>
+    // ============================================================
+    // Configuration
+    // ============================================================
+    const NAMESPACE = 'urn:x-cast:com.nanobot.canvas';
+    const DEBUG = false; // Set to true to show debug panel
+
+    // ============================================================
+    // State
+    // ============================================================
+    let ws = null;
+    let currentSurfaceId = null;
+    let components = new Map();
+    let dataModel = {};
+    let reconnectAttempts = 0;
+    const MAX_RECONNECT_ATTEMPTS = 5;
+    const RECONNECT_DELAY = 2000;
+
+    // ============================================================
+    // Logging
+    // ============================================================
+    function log(message, data = null) {
+      const timestamp = new Date().toISOString().substr(11, 12);
+      const logMessage = `[${timestamp}] ${message}`;
+      console.log(logMessage, data || '');
+      
+      if (DEBUG) {
+        const debugEl = document.getElementById('debug');
+        debugEl.classList.add('visible');
+        debugEl.innerHTML += `${logMessage}${data ? ' ' + JSON.stringify(data) : ''}<br>`;
+        debugEl.scrollTop = debugEl.scrollHeight;
+      }
+    }
+
+    // ============================================================
+    // Status UI
+    // ============================================================
+    function showStatus(message, isError = false) {
+      const statusEl = document.getElementById('status');
+      const messageEl = document.getElementById('status-message');
+      const spinnerEl = document.getElementById('status-spinner');
+      const canvasEl = document.getElementById('canvas');
+
+      statusEl.classList.remove('hidden');
+      canvasEl.classList.add('hidden');
+      messageEl.textContent = message;
+      messageEl.classList.toggle('status-error', isError);
+      spinnerEl.style.display = isError ? 'none' : 'block';
+    }
+
+    function showCanvas() {
+      const statusEl = document.getElementById('status');
+      const canvasEl = document.getElementById('canvas');
+
+      statusEl.classList.add('hidden');
+      canvasEl.classList.remove('hidden');
+    }
+
+    // ============================================================
+    // A2UI Renderer
+    // ============================================================
+    function renderComponents() {
+      const canvasEl = document.getElementById('canvas');
+      
+      // Find root component
+      const rootComponent = components.get('root');
+      if (!rootComponent) {
+        log('No root component found');
+        return;
+      }
+
+      // Clear and render
+      canvasEl.innerHTML = '';
+      const rootEl = renderComponent(rootComponent);
+      if (rootEl) {
+        canvasEl.appendChild(rootEl);
+      }
+    }
+
+    function renderComponent(comp) {
+      if (!comp) return null;
+
+      const el = document.createElement('div');
+      el.id = `a2ui-${comp.id}`;
+      el.className = `a2ui-${comp.component.toLowerCase()}`;
+
+      // Apply styles
+      if (comp.style) {
+        Object.entries(comp.style).forEach(([key, value]) => {
+          // Convert camelCase to kebab-case
+          const cssKey = key.replace(/([A-Z])/g, '-$1').toLowerCase();
+          el.style[key] = typeof value === 'number' && !['opacity', 'zIndex', 'flex', 'order'].includes(key) 
+            ? `${value}px` 
+            : value;
+        });
+      }
+
+      // Render based on component type
+      switch (comp.component) {
+        case 'Text':
+          el.textContent = resolveDataBinding(comp.text);
+          break;
+
+        case 'Image':
+          const img = document.createElement('img');
+          img.src = resolveDataBinding(comp.src);
+          img.alt = comp.alt || '';
+          img.className = 'a2ui-image';
+          if (comp.style?.width) img.style.width = typeof comp.style.width === 'number' ? `${comp.style.width}px` : comp.style.width;
+          if (comp.style?.height) img.style.height = typeof comp.style.height === 'number' ? `${comp.style.height}px` : comp.style.height;
+          el.appendChild(img);
+          break;
+
+        case 'Column':
+        case 'Row':
+          if (comp.style?.gap) {
+            el.style.gap = typeof comp.style.gap === 'number' ? `${comp.style.gap}px` : comp.style.gap;
+          }
+          if (comp.children) {
+            comp.children.forEach(childId => {
+              const childComp = components.get(childId);
+              if (childComp) {
+                const childEl = renderComponent(childComp);
+                if (childEl) el.appendChild(childEl);
+              }
+            });
+          }
+          break;
+
+        case 'Card':
+          if (comp.children) {
+            comp.children.forEach(childId => {
+              const childComp = components.get(childId);
+              if (childComp) {
+                const childEl = renderComponent(childComp);
+                if (childEl) el.appendChild(childEl);
+              }
+            });
+          }
+          break;
+
+        case 'List':
+          const ul = document.createElement('ul');
+          ul.className = 'a2ui-list';
+          const items = resolveDataBinding(comp.items) || [];
+          items.forEach((item, index) => {
+            const li = document.createElement('li');
+            li.className = 'a2ui-list-item';
+            if (comp.itemTemplate) {
+              // Simple template rendering
+              li.textContent = typeof item === 'object' ? JSON.stringify(item) : item;
+            } else {
+              li.textContent = typeof item === 'object' ? JSON.stringify(item) : item;
+            }
+            ul.appendChild(li);
+          });
+          el.appendChild(ul);
+          break;
+
+        case 'Spacer':
+          el.style.flex = comp.flex || 1;
+          break;
+
+        default:
+          log(`Unknown component type: ${comp.component}`);
+          el.textContent = `[${comp.component}]`;
+      }
+
+      return el;
+    }
+
+    function resolveDataBinding(value) {
+      if (typeof value !== 'string') return value;
+      
+      // Check for data binding syntax: {{path.to.value}}
+      const match = value.match(/^\{\{(.+)\}\}$/);
+      if (!match) return value;
+
+      const path = match[1].trim();
+      return getNestedValue(dataModel, path);
+    }
+
+    function getNestedValue(obj, path) {
+      return path.split('.').reduce((current, key) => {
+        return current && current[key] !== undefined ? current[key] : undefined;
+      }, obj);
+    }
+
+    // ============================================================
+    // A2UI Message Handlers
+    // ============================================================
+    function handleA2UIMessage(message) {
+      log(`A2UI message: ${message.type}`);
+
+      switch (message.type) {
+        case 'updateComponents':
+          if (message.components) {
+            message.components.forEach(comp => {
+              components.set(comp.id, comp);
+            });
+            renderComponents();
+          }
+          break;
+
+        case 'updateDataModel':
+          if (message.path && message.value !== undefined) {
+            setNestedValue(dataModel, message.path, message.value);
+            renderComponents();
+          }
+          break;
+
+        case 'replaceDataModel':
+          dataModel = message.dataModel || {};
+          renderComponents();
+          break;
+
+        case 'removeComponents':
+          if (message.ids) {
+            message.ids.forEach(id => components.delete(id));
+            renderComponents();
+          }
+          break;
+
+        case 'clear':
+          components.clear();
+          dataModel = {};
+          document.getElementById('canvas').innerHTML = '';
+          break;
+
+        default:
+          log(`Unknown A2UI message type: ${message.type}`);
+      }
+    }
+
+    function setNestedValue(obj, path, value) {
+      const keys = path.split('.');
+      const lastKey = keys.pop();
+      const target = keys.reduce((current, key) => {
+        if (current[key] === undefined) {
+          current[key] = {};
+        }
+        return current[key];
+      }, obj);
+      target[lastKey] = value;
+    }
+
+    // ============================================================
+    // WebSocket Connection
+    // ============================================================
+    function connectToCanvas(serverUrl, surfaceId) {
+      // Close existing connection
+      if (ws) {
+        ws.close();
+      }
+
+      currentSurfaceId = surfaceId;
+      reconnectAttempts = 0;
+      
+      // Construct WebSocket URL
+      const wsUrl = serverUrl.replace(/^http/, 'ws');
+      const fullUrl = `${wsUrl}/ws/${surfaceId}`;
+      
+      log(`Connecting to Canvas Server: ${fullUrl}`);
+      showStatus('Connecting to Canvas Server...');
+
+      try {
+        ws = new WebSocket(fullUrl);
+
+        ws.onopen = () => {
+          log('Connected to Canvas Server');
+          reconnectAttempts = 0;
+          showCanvas();
+        };
+
+        ws.onmessage = (event) => {
+          try {
+            const message = JSON.parse(event.data);
+            handleA2UIMessage(message);
+          } catch (error) {
+            log(`Failed to parse message: ${error.message}`);
+          }
+        };
+
+        ws.onclose = (event) => {
+          log(`WebSocket closed: ${event.code} ${event.reason}`);
+          
+          if (event.code !== 1000 && reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+            reconnectAttempts++;
+            showStatus(`Connection lost. Reconnecting (${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})...`);
+            setTimeout(() => connectToCanvas(serverUrl, surfaceId), RECONNECT_DELAY);
+          } else {
+            showStatus('Disconnected from Canvas Server', true);
+          }
+        };
+
+        ws.onerror = (error) => {
+          log(`WebSocket error: ${error}`);
+        };
+
+      } catch (error) {
+        log(`Failed to connect: ${error.message}`);
+        showStatus(`Connection failed: ${error.message}`, true);
+      }
+    }
+
+    function disconnectCanvas() {
+      if (ws) {
+        ws.close(1000, 'Disconnect requested');
+        ws = null;
+      }
+      currentSurfaceId = null;
+      components.clear();
+      dataModel = {};
+      showStatus('Disconnected');
+    }
+
+    // ============================================================
+    // Google Cast Receiver
+    // ============================================================
+    function initCastReceiver() {
+      const context = cast.framework.CastReceiverContext.getInstance();
+      const playerManager = context.getPlayerManager();
+
+      log('Initializing Cast Receiver');
+
+      // Listen for custom messages from sender (nanobot)
+      context.addCustomMessageListener(NAMESPACE, (event) => {
+        log('Received Cast message', event.data);
+
+        const { type, canvasServerUrl, surfaceId } = event.data;
+
+        switch (type) {
+          case 'connect':
+            if (canvasServerUrl && surfaceId) {
+              connectToCanvas(canvasServerUrl, surfaceId);
+            } else {
+              log('Invalid connect message: missing canvasServerUrl or surfaceId');
+            }
+            break;
+
+          case 'disconnect':
+            disconnectCanvas();
+            break;
+
+          case 'ping':
+            // Respond to health check
+            context.sendCustomMessage(NAMESPACE, event.senderId, {
+              type: 'pong',
+              surfaceId: currentSurfaceId,
+              connected: ws && ws.readyState === WebSocket.OPEN
+            });
+            break;
+
+          default:
+            log(`Unknown Cast message type: ${type}`);
+        }
+      });
+
+      // Configure receiver options
+      const options = new cast.framework.CastReceiverOptions();
+      options.disableIdleTimeout = true; // Keep receiver alive indefinitely
+      options.maxInactivity = 3600; // 1 hour max inactivity
+
+      // Start the receiver
+      context.start(options);
+      log('Cast Receiver started');
+    }
+
+    // ============================================================
+    // Initialization
+    // ============================================================
+    document.addEventListener('DOMContentLoaded', () => {
+      log('Canvas Receiver initialized');
+      
+      // Check if running in Cast environment
+      if (typeof cast !== 'undefined' && cast.framework) {
+        initCastReceiver();
+      } else {
+        log('Not running in Cast environment - development mode');
+        showStatus('Development mode - waiting for Cast SDK...');
+        
+        // In development, allow manual connection via URL params
+        const params = new URLSearchParams(window.location.search);
+        const serverUrl = params.get('server');
+        const surfaceId = params.get('surface');
+        
+        if (serverUrl && surfaceId) {
+          log(`Dev mode: connecting to ${serverUrl}/${surfaceId}`);
+          connectToCanvas(serverUrl, surfaceId);
+        }
+      }
+    });
+  </script>
+</body>
+</html>
