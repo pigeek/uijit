@@ -39,7 +39,7 @@ Configure your Canvas MCP server to use uijit as the receiver URL:
 ```json
 {
   "cast": {
-    "receiver_url": "https://pigeek.github.io/uijit/canvas-receiver/"
+    "receiver_url": "https://uijit.com/canvas-receiver/"
   }
 }
 ```
@@ -49,7 +49,7 @@ Configure your Canvas MCP server to use uijit as the receiver URL:
 To use this receiver with Chromecast, you need to register it:
 
 1. Go to [Google Cast SDK Developer Console](https://cast.google.com/publish)
-2. Register the receiver URL: `https://pigeek.github.io/uijit/canvas-receiver/`
+2. Register the receiver URL: `https://uijit.com/canvas-receiver/`
 3. Use the App ID in your sender application
 
 ### Local Development
