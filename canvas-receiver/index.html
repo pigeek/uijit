@@ -432,9 +432,9 @@
     // WebSocket Connection
     // ============================================================
     function connectToCanvas(serverUrl, surfaceId) {
-      // Close existing connection
+      // Close existing connection cleanly (code 1000) to prevent reconnect logic
       if (ws) {
-        ws.close();
+        ws.close(1000, 'Switching surfaces');
       }
 
       currentSurfaceId = surfaceId;
