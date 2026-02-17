@@ -345,6 +345,19 @@
           el.style.flex = comp.flex || 1;
           break;
 
+        case 'Box':
+          // Generic container - just apply styles, render children if any
+          if (comp.children) {
+            comp.children.forEach(childId => {
+              const childComp = components.get(childId);
+              if (childComp) {
+                const childEl = renderComponent(childComp);
+                if (childEl) el.appendChild(childEl);
+              }
+            });
+          }
+          break;
+
         default:
           log(`Unknown component type: ${comp.component}`);
           el.textContent = `[${comp.component}]`;
