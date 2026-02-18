@@ -101,7 +101,10 @@
     #canvas {
       width: 100vw;
       height: 100vh;
-      overflow: auto;
+      overflow: hidden;
+      /* TV safe zone: 3% margin on all edges to account for TV overscan */
+      box-sizing: border-box;
+      padding: 3vh 3vw;
     }
 
     #canvas.hidden {
