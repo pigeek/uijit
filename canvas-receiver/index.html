@@ -381,7 +381,11 @@
       // Render based on component type
       switch (comp.component) {
         case 'Text':
-          el.textContent = resolveDataBinding(comp.text);
+          const textVal = resolveDataBinding(comp.text) || '';
+          if (textVal.includes('\n')) {
+            el.style.whiteSpace = 'pre-line';
+          }
+          el.textContent = textVal;
           break;
 
         case 'Image':
