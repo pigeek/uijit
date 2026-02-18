@@ -7,16 +7,12 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <title>Canvas Receiver - uijit</title>
-  
+
   <!-- Google Cast Receiver SDK (must be from gstatic) -->
   <script src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
-  
+
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
       font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -30,10 +26,7 @@
     /* Status screen shown while waiting for connection */
     #status {
       position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
+      top: 0; left: 0; right: 0; bottom: 0;
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -43,9 +36,7 @@
       padding: 48px;
     }
 
-    #status.hidden {
-      display: none;
-    }
+    #status.hidden { display: none; }
 
     .status-logo {
       font-size: 96px;
@@ -83,13 +74,9 @@
       animation: spin 1s linear infinite;
     }
 
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
-    .status-error {
-      color: #e94560;
-    }
+    .status-error { color: #e94560; }
 
     .status-info {
       margin-top: 48px;
@@ -97,159 +84,19 @@
       color: #606080;
     }
 
-    /* Canvas container for A2UI rendering */
+    /* Canvas container — all styles come inline from server */
     #canvas {
       width: 100vw;
       height: 100vh;
       overflow: hidden;
     }
 
-    #canvas.hidden {
-      display: none;
-    }
-
-    /* A2UI Component Styles */
-    .a2ui-column {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .a2ui-row {
-      display: flex;
-      flex-direction: row;
-    }
-
-    .a2ui-card {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 16px;
-      padding: 24px;
-    }
-
-    .a2ui-text {
-      color: #ffffff;
-    }
-
-    .a2ui-image {
-      max-width: 100%;
-      border-radius: 8px;
-    }
-
-    .a2ui-list {
-      list-style: none;
-    }
-
-    .a2ui-list-item {
-      padding: 16px 0;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .a2ui-list-item:last-child {
-      border-bottom: none;
-    }
-
-    .a2ui-grid {
-      display: grid;
-    }
-
-    .a2ui-divider {
-      background: rgba(255, 255, 255, 0.2);
-    }
-
-    .a2ui-divider.horizontal {
-      height: 1px;
-      width: 100%;
-    }
-
-    .a2ui-divider.vertical {
-      width: 1px;
-      height: 100%;
-    }
-
-    .a2ui-icon {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .a2ui-progress {
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 8px;
-      overflow: hidden;
-      height: 8px;
-    }
-
-    .a2ui-progress-fill {
-      height: 100%;
-      background: linear-gradient(90deg, #e94560, #ff6b6b);
-      transition: width 0.3s ease;
-    }
-
-    .a2ui-badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 4px 12px;
-      border-radius: 12px;
-      background: #e94560;
-      color: white;
-      font-size: 14px;
-      font-weight: 600;
-    }
-
-    .a2ui-spinner {
-      display: inline-block;
-      border: 3px solid rgba(255, 255, 255, 0.2);
-      border-top-color: #e94560;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
-
-    .a2ui-table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-
-    .a2ui-table th,
-    .a2ui-table td {
-      padding: 12px 16px;
-      text-align: left;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .a2ui-table th {
-      font-weight: 600;
-      color: #a0a0c0;
-      background: rgba(255, 255, 255, 0.05);
-    }
-
-    .a2ui-table tr:last-child td {
-      border-bottom: none;
-    }
-
-    .a2ui-avatar {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #e94560, #ff6b6b);
-      color: white;
-      font-weight: 600;
-      overflow: hidden;
-    }
-
-    .a2ui-avatar img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
+    #canvas.hidden { display: none; }
 
     /* Debug panel (hidden by default) */
     #debug {
       position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
+      bottom: 0; left: 0; right: 0;
       background: rgba(0, 0, 0, 0.8);
       color: #00ff00;
       font-family: monospace;
@@ -260,9 +107,7 @@
       display: none;
     }
 
-    #debug.visible {
-      display: block;
-    }
+    #debug.visible { display: block; }
   </style>
 </head>
 <body>
@@ -272,10 +117,10 @@
     <h1 class="status-title">uijit Canvas</h1>
     <p id="status-message" class="status-message">Waiting for connection...</p>
     <div id="status-spinner" class="status-spinner"></div>
-    <p class="status-info">Canvas Receiver v1.2</p>
+    <p class="status-info">Canvas Receiver v2.0</p>
   </div>
 
-  <!-- Canvas for A2UI rendering -->
+  <!-- Canvas — receives pre-rendered HTML from server -->
   <div id="canvas" class="hidden"></div>
 
   <!-- Debug panel -->
@@ -286,15 +131,13 @@
     // Configuration
     // ============================================================
     const NAMESPACE = 'urn:x-cast:com.nanobot.canvas';
-    const DEBUG = false; // Set to true to show debug panel
+    const DEBUG = false;
 
     // ============================================================
     // State
     // ============================================================
     let ws = null;
     let currentSurfaceId = null;
-    let components = new Map();
-    let dataModel = {};
     let reconnectAttempts = 0;
     const MAX_RECONNECT_ATTEMPTS = 5;
     const RECONNECT_DELAY = 2000;
@@ -306,7 +149,7 @@
       const timestamp = new Date().toISOString().substr(11, 12);
       const logMessage = `[${timestamp}] ${message}`;
       console.log(logMessage, data || '');
-      
+
       if (DEBUG) {
         const debugEl = document.getElementById('debug');
         debugEl.classList.add('visible');
@@ -332,371 +175,51 @@
     }
 
     function showCanvas() {
-      const statusEl = document.getElementById('status');
-      const canvasEl = document.getElementById('canvas');
-
-      statusEl.classList.add('hidden');
-      canvasEl.classList.remove('hidden');
+      document.getElementById('status').classList.add('hidden');
+      document.getElementById('canvas').classList.remove('hidden');
     }
 
     // ============================================================
-    // A2UI Renderer
+    // Message Handler — thin shell, no rendering logic
     // ============================================================
-    function renderComponents() {
-      const canvasEl = document.getElementById('canvas');
-      
-      // Find root component
-      const rootComponent = components.get('root');
-      if (!rootComponent) {
-        log('No root component found');
-        return;
-      }
-
-      // Clear and render
-      canvasEl.innerHTML = '';
-      const rootEl = renderComponent(rootComponent);
-      if (rootEl) {
-        canvasEl.appendChild(rootEl);
-      }
-    }
-
-    function renderComponent(comp) {
-      if (!comp) return null;
-
-      const el = document.createElement('div');
-      el.id = `a2ui-${comp.id}`;
-      el.className = `a2ui-${comp.component.toLowerCase()}`;
-
-      // Apply styles
-      if (comp.style) {
-        Object.entries(comp.style).forEach(([key, value]) => {
-          // Convert camelCase to kebab-case
-          const cssKey = key.replace(/([A-Z])/g, '-$1').toLowerCase();
-          el.style[key] = typeof value === 'number' && !['opacity', 'zIndex', 'flex', 'order'].includes(key) 
-            ? `${value}px` 
-            : value;
-        });
-      }
-
-      // Render based on component type
-      switch (comp.component) {
-        case 'Text':
-          const textVal = resolveDataBinding(comp.text) || '';
-          if (textVal.includes('\n')) {
-            el.style.whiteSpace = 'pre-line';
-          }
-          el.textContent = textVal;
-          break;
-
-        case 'Image':
-          const img = document.createElement('img');
-          img.src = resolveDataBinding(comp.src);
-          img.alt = comp.alt || '';
-          img.className = 'a2ui-image';
-          if (comp.style?.width) img.style.width = typeof comp.style.width === 'number' ? `${comp.style.width}px` : comp.style.width;
-          if (comp.style?.height) img.style.height = typeof comp.style.height === 'number' ? `${comp.style.height}px` : comp.style.height;
-          el.appendChild(img);
-          break;
-
-        case 'Column':
-        case 'Row':
-          if (comp.style?.gap) {
-            el.style.gap = typeof comp.style.gap === 'number' ? `${comp.style.gap}px` : comp.style.gap;
-          }
-          if (comp.children) {
-            comp.children.forEach(childId => {
-              const childComp = components.get(childId);
-              if (childComp) {
-                const childEl = renderComponent(childComp);
-                if (childEl) el.appendChild(childEl);
-              }
-            });
-          }
-          break;
-
-        case 'Card':
-          if (comp.children) {
-            comp.children.forEach(childId => {
-              const childComp = components.get(childId);
-              if (childComp) {
-                const childEl = renderComponent(childComp);
-                if (childEl) el.appendChild(childEl);
-              }
-            });
-          }
-          break;
-
-        case 'List':
-          const ul = document.createElement('ul');
-          ul.className = 'a2ui-list';
-          const items = resolveDataBinding(comp.items) || [];
-          items.forEach((item, index) => {
-            const li = document.createElement('li');
-            li.className = 'a2ui-list-item';
-            if (comp.itemTemplate) {
-              // Simple template rendering
-              li.textContent = typeof item === 'object' ? JSON.stringify(item) : item;
-            } else {
-              li.textContent = typeof item === 'object' ? JSON.stringify(item) : item;
-            }
-            ul.appendChild(li);
-          });
-          el.appendChild(ul);
-          break;
-
-        case 'Spacer':
-          el.style.flex = comp.flex || 1;
-          break;
-
-        case 'Box':
-          // Generic container - just apply styles, render children if any
-          if (comp.children) {
-            comp.children.forEach(childId => {
-              const childComp = components.get(childId);
-              if (childComp) {
-                const childEl = renderComponent(childComp);
-                if (childEl) el.appendChild(childEl);
-              }
-            });
-          }
-          break;
-
-        case 'Grid':
-          // CSS Grid container
-          if (comp.columns) {
-            el.style.gridTemplateColumns = typeof comp.columns === 'number'
-              ? `repeat(${comp.columns}, 1fr)`
-              : comp.columns;
-          }
-          if (comp.rows) {
-            el.style.gridTemplateRows = typeof comp.rows === 'number'
-              ? `repeat(${comp.rows}, 1fr)`
-              : comp.rows;
-          }
-          if (comp.style?.gap) {
-            el.style.gap = typeof comp.style.gap === 'number' ? `${comp.style.gap}px` : comp.style.gap;
-          }
-          if (comp.children) {
-            comp.children.forEach(childId => {
-              const childComp = components.get(childId);
-              if (childComp) {
-                const childEl = renderComponent(childComp);
-                if (childEl) el.appendChild(childEl);
-              }
-            });
-          }
-          break;
-
-        case 'Divider':
-          // Horizontal or vertical line separator
-          const orientation = comp.orientation || 'horizontal';
-          el.classList.add(orientation);
-          if (comp.thickness) {
-            if (orientation === 'horizontal') {
-              el.style.height = typeof comp.thickness === 'number' ? `${comp.thickness}px` : comp.thickness;
-            } else {
-              el.style.width = typeof comp.thickness === 'number' ? `${comp.thickness}px` : comp.thickness;
-            }
-          }
-          break;
-
-        case 'Icon':
-          // Display emoji or icon character
-          el.textContent = comp.icon || comp.emoji || '●';
-          if (comp.size) {
-            el.style.fontSize = typeof comp.size === 'number' ? `${comp.size}px` : comp.size;
-          }
-          break;
-
-        case 'Progress':
-        case 'ProgressBar':
-          // Progress bar with fill
-          const progress = Math.min(100, Math.max(0, resolveDataBinding(comp.value) || 0));
-          const fill = document.createElement('div');
-          fill.className = 'a2ui-progress-fill';
-          fill.style.width = `${progress}%`;
-          if (comp.color) {
-            fill.style.background = comp.color;
-          }
-          el.appendChild(fill);
-          break;
-
-        case 'Badge':
-          // Small label/counter
-          el.textContent = resolveDataBinding(comp.text) || resolveDataBinding(comp.value) || '';
-          if (comp.color) {
-            el.style.background = comp.color;
-          }
-          break;
-
-        case 'Spinner':
-          // Loading spinner
-          const size = comp.size || 32;
-          el.style.width = typeof size === 'number' ? `${size}px` : size;
-          el.style.height = typeof size === 'number' ? `${size}px` : size;
-          if (comp.color) {
-            el.style.borderTopColor = comp.color;
-          }
-          break;
-
-        case 'Table':
-          // Data table
-          const table = document.createElement('table');
-          table.className = 'a2ui-table';
-
-          // Header row
-          if (comp.headers) {
-            const thead = document.createElement('thead');
-            const headerRow = document.createElement('tr');
-            comp.headers.forEach(header => {
-              const th = document.createElement('th');
-              th.textContent = header;
-              headerRow.appendChild(th);
-            });
-            thead.appendChild(headerRow);
-            table.appendChild(thead);
-          }
-
-          // Data rows
-          const tableData = resolveDataBinding(comp.data) || comp.rows || [];
-          if (tableData.length > 0) {
-            const tbody = document.createElement('tbody');
-            tableData.forEach(row => {
-              const tr = document.createElement('tr');
-              const cells = Array.isArray(row) ? row : Object.values(row);
-              cells.forEach(cell => {
-                const td = document.createElement('td');
-                td.textContent = cell;
-                tr.appendChild(td);
-              });
-              tbody.appendChild(tr);
-            });
-            table.appendChild(tbody);
-          }
-          el.appendChild(table);
-          break;
-
-        case 'Avatar':
-          // Circular image or initials
-          const avatarSize = comp.size || 48;
-          el.style.width = typeof avatarSize === 'number' ? `${avatarSize}px` : avatarSize;
-          el.style.height = typeof avatarSize === 'number' ? `${avatarSize}px` : avatarSize;
-          el.style.fontSize = typeof avatarSize === 'number' ? `${Math.floor(avatarSize * 0.4)}px` : avatarSize;
-
-          if (comp.src) {
-            const avatarImg = document.createElement('img');
-            avatarImg.src = resolveDataBinding(comp.src);
-            avatarImg.alt = comp.alt || '';
-            el.appendChild(avatarImg);
-          } else if (comp.initials) {
-            el.textContent = comp.initials.substring(0, 2).toUpperCase();
-          } else if (comp.name) {
-            // Generate initials from name
-            const nameParts = comp.name.split(' ');
-            const initials = nameParts.map(p => p[0]).join('').substring(0, 2).toUpperCase();
-            el.textContent = initials;
-          }
-          break;
-
-        default:
-          log(`Unknown component type: ${comp.component}`);
-          el.textContent = `[${comp.component}]`;
-      }
-
-      return el;
-    }
-
-    function resolveDataBinding(value) {
-      if (typeof value !== 'string') return value;
-      
-      // Check for data binding syntax: {{path.to.value}}
-      const match = value.match(/^\{\{(.+)\}\}$/);
-      if (!match) return value;
-
-      const path = match[1].trim();
-      return getNestedValue(dataModel, path);
-    }
-
-    function getNestedValue(obj, path) {
-      return path.split('.').reduce((current, key) => {
-        return current && current[key] !== undefined ? current[key] : undefined;
-      }, obj);
-    }
-
-    // ============================================================
-    // A2UI Message Handlers
-    // ============================================================
-    function handleA2UIMessage(message) {
-      log(`A2UI message: ${message.type}`);
+    function handleMessage(message) {
+      log(`Message: ${message.type}`);
 
       switch (message.type) {
-        case 'updateComponents':
-          if (message.components) {
-            message.components.forEach(comp => {
-              components.set(comp.id, comp);
-            });
-            renderComponents();
-          }
-          break;
-
-        case 'updateDataModel':
-          if (message.path && message.value !== undefined) {
-            setNestedValue(dataModel, message.path, message.value);
-            renderComponents();
-          }
-          break;
-
-        case 'replaceDataModel':
-          dataModel = message.dataModel || {};
-          renderComponents();
-          break;
-
-        case 'removeComponents':
-          if (message.ids) {
-            message.ids.forEach(id => components.delete(id));
-            renderComponents();
-          }
+        case 'html':
+          // Server-rendered HTML — just display it
+          document.getElementById('canvas').innerHTML = message.html;
+          showCanvas();
           break;
 
         case 'clear':
-          components.clear();
-          dataModel = {};
           document.getElementById('canvas').innerHTML = '';
           break;
 
-        default:
-          log(`Unknown A2UI message type: ${message.type}`);
-      }
-    }
+        case 'deleteSurface':
+          document.getElementById('canvas').innerHTML = '';
+          showStatus('Surface closed');
+          break;
 
-    function setNestedValue(obj, path, value) {
-      const keys = path.split('.');
-      const lastKey = keys.pop();
-      const target = keys.reduce((current, key) => {
-        if (current[key] === undefined) {
-          current[key] = {};
-        }
-        return current[key];
-      }, obj);
-      target[lastKey] = value;
+        default:
+          log(`Unknown message type: ${message.type}`);
+      }
     }
 
     // ============================================================
     // WebSocket Connection
     // ============================================================
     function connectToCanvas(serverUrl, surfaceId) {
-      // Close existing connection cleanly (code 1000) to prevent reconnect logic
       if (ws) {
         ws.close(1000, 'Switching surfaces');
       }
 
       currentSurfaceId = surfaceId;
       reconnectAttempts = 0;
-      
-      // Construct WebSocket URL
+
       const wsUrl = serverUrl.replace(/^http/, 'ws');
       const fullUrl = `${wsUrl}/ws/${surfaceId}`;
-      
+
       log(`Connecting to Canvas Server: ${fullUrl}`);
       showStatus('Connecting to Canvas Server...');
 
@@ -712,7 +235,7 @@
         ws.onmessage = (event) => {
           try {
             const message = JSON.parse(event.data);
-            handleA2UIMessage(message);
+            handleMessage(message);
           } catch (error) {
             log(`Failed to parse message: ${error.message}`);
           }
@@ -720,12 +243,12 @@
 
         ws.onclose = (event) => {
           log(`WebSocket closed: ${event.code} ${event.reason}`);
-          
+
           if (event.code !== 1000 && reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
             reconnectAttempts++;
             showStatus(`Connection lost. Reconnecting (${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})...`);
             setTimeout(() => connectToCanvas(serverUrl, surfaceId), RECONNECT_DELAY);
-          } else {
+          } else if (event.code !== 1000) {
             showStatus('Disconnected from Canvas Server', true);
           }
         };
@@ -746,8 +269,6 @@
         ws = null;
       }
       currentSurfaceId = null;
-      components.clear();
-      dataModel = {};
       showStatus('Disconnected');
     }
 
@@ -756,11 +277,9 @@
     // ============================================================
     function initCastReceiver() {
       const context = cast.framework.CastReceiverContext.getInstance();
-      const playerManager = context.getPlayerManager();
 
       log('Initializing Cast Receiver');
 
-      // Listen for custom messages from sender (nanobot)
       context.addCustomMessageListener(NAMESPACE, (event) => {
         log('Received Cast message', event.data);
 
@@ -780,7 +299,6 @@
             break;
 
           case 'ping':
-            // Respond to health check
             context.sendCustomMessage(NAMESPACE, event.senderId, {
               type: 'pong',
               surfaceId: currentSurfaceId,
@@ -793,12 +311,10 @@
         }
       });
 
-      // Configure receiver options
       const options = new cast.framework.CastReceiverOptions();
-      options.disableIdleTimeout = true; // Keep receiver alive indefinitely
-      options.maxInactivity = 3600; // 1 hour max inactivity
+      options.disableIdleTimeout = true;
+      options.maxInactivity = 3600;
 
-      // Start the receiver
       context.start(options);
       log('Cast Receiver started');
     }
@@ -807,20 +323,18 @@
     // Initialization
     // ============================================================
     document.addEventListener('DOMContentLoaded', () => {
-      log('Canvas Receiver initialized');
-      
-      // Check if running in Cast environment
+      log('Canvas Receiver v2.0 initialized');
+
       if (typeof cast !== 'undefined' && cast.framework) {
         initCastReceiver();
       } else {
         log('Not running in Cast environment - development mode');
         showStatus('Development mode - waiting for Cast SDK...');
-        
-        // In development, allow manual connection via URL params
+
         const params = new URLSearchParams(window.location.search);
         const serverUrl = params.get('server');
         const surfaceId = params.get('surface');
-        
+
         if (serverUrl && surfaceId) {
           log(`Dev mode: connecting to ${serverUrl}/${surfaceId}`);
           connectToCanvas(serverUrl, surfaceId);
