@@ -15,6 +15,22 @@ Thumbs.db
 .env.local
 node_modules/
 
-# Build artifacts (if any)
+# Build artifacts
 dist/
 build/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+*.egg
+.eggs/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.venv/
+venv/
+
+# uijit data
+.uijit/

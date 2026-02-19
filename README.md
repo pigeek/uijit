@@ -1,87 +1,111 @@
 # uijit
 
-**UI Just-In-Time** - A service for casting dynamic AI-generated visualizations to Chromecast and Google TV devices.
+**UI Just-In-Time** - MCP server for A2UI canvas rendering and Chromecast casting.
 
 ## What is uijit?
 
-uijit hosts the Canvas Receiver - a Google Cast receiver application that enables AI agents (like nanobot) to display rich visualizations on your TV in real-time.
+uijit is an MCP (Model Context Protocol) server that enables AI agents to create rich visualizations using the A2UI component format and cast them to Chromecast/Google TV devices in real-time.
+
+This repository also hosts the **Canvas Receiver** - a Google Cast receiver application served via GitHub Pages at [uijit.com](https://uijit.com).
+
+## Installation
+
+```bash
+pip install uijit
+```
+
+## Usage
+
+### As an MCP server (stdio transport)
+
+```bash
+uijit --host 0.0.0.0 --port 8090
+```
+
+### With nanobot
+
+Add to your nanobot config:
+
+```json
+{
+  "tools": {
+    "mcpServers": {
+      "uijit": {
+        "command": "uijit",
+        "args": ["--host", "0.0.0.0", "--port", "8090"]
+      }
+    }
+  }
+}
+```
+
+### MCP Tools
+
+| Tool | Description |
+|------|-------------|
+| `canvas_create` | Create a new canvas surface |
+| `canvas_update` | Update components using A2UI format |
+| `canvas_data` | Update data model without re-rendering |
+| `canvas_close` | Close and delete a surface |
+| `canvas_list` | List all surfaces |
+| `canvas_show` | Show/navigate existing surfaces |
+| `canvas_get` | Get full state of a canvas |
 
 ## How It Works
 
 ```
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│  AI Agent   │────▶│   Canvas    │────▶│   uijit     │────▶│ Chromecast  │
-│  (nanobot)  │     │   Server    │     │  Receiver   │     │    TV       │
+│  AI Agent   │────▶│   uijit     │────▶│   uijit     │────▶│ Chromecast  │
+│  (nanobot)  │     │  MCP Server │     │  Receiver   │     │    TV       │
 └─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘
       │                   │                   │                   │
       │  A2UI JSON        │  WebSocket        │  Cast SDK         │
       │  (components)     │  (real-time)      │  (custom msg)     │
 ```
 
-1. **AI Agent** generates A2UI visualization components
-2. **Canvas Server** (local) manages surfaces and WebSocket connections
-3. **uijit Receiver** (this service) is loaded by Chromecast from GitHub Pages
-4. **Chromecast** receives the local Canvas Server URL via Cast messaging and connects
+1. **AI Agent** generates A2UI visualization components via MCP tools
+2. **uijit MCP Server** manages surfaces, renders HTML, serves via WebSocket
+3. **uijit Receiver** (GitHub Pages) is loaded by Chromecast and connects to the server
+4. **Chromecast** displays the live-updating visualization
 
 ## URLs
 
 | Path | Description |
 |------|-------------|
-| `/` | Landing page (you are here) |
-| `/canvas-receiver/` | Google Cast receiver application |
+| [uijit.com](https://uijit.com) | Landing page |
+| [uijit.com/canvas-receiver/](https://uijit.com/canvas-receiver/) | Google Cast receiver application |
 
-## For Developers
+## Google Cast App Registration
 
-### Using with nanobot
-
-Configure your Canvas MCP server to use uijit as the receiver URL:
-
-```json
-{
-  "cast": {
-    "receiver_url": "https://uijit.com/canvas-receiver/"
-  }
-}
-```
-
-### Google Cast App Registration
-
-To use this receiver with Chromecast, you need to register it:
+To use the receiver with Chromecast:
 
 1. Go to [Google Cast SDK Developer Console](https://cast.google.com/publish)
 2. Register the receiver URL: `https://uijit.com/canvas-receiver/`
 3. Use the App ID in your sender application
 
-### Local Development
-
-```bash
-# Clone the repository
-git clone https://github.com/pigeek/uijit.git
-cd uijit
-
-# Serve locally (any static server works)
-python -m http.server 8000
-# or
-npx serve .
-```
-
 ## Repository Structure
 
 ```
 uijit/
-├── README.md              # This file
-├── index.html             # Landing page
-└── canvas-receiver/
-    └── index.html         # Cast receiver application
+├── index.html                 # Landing page (GitHub Pages)
+├── canvas-receiver/
+│   └── index.html             # Cast receiver application
+├── pyproject.toml             # Python package metadata
+├── src/uijit/                 # MCP server source
+│   ├── cli.py                 # CLI entry point
+│   ├── server.py              # MCP protocol handler
+│   ├── canvas_manager.py      # Surface lifecycle management
+│   ├── renderer.py            # A2UI → HTML renderer
+│   ├── web_server.py          # HTTP/WebSocket server
+│   └── models.py              # Data models
+└── tests/
+    └── test_canvas_manager.py # Tests
 ```
 
 ## Related Projects
 
-- [canvas-mcp](https://github.com/user/canvas-mcp) - MCP server for canvas management
 - [androidtvmcp](https://github.com/pigeek/androidtvmcp) - MCP server for Android TV control
-- [A2UI](https://github.com/user/A2UI) - Agent-to-User Interface protocol
 
 ## License
 
 MIT
-

@@ -1,0 +1,150 @@
+"""CLI for uijit MCP Server."""
+
+import asyncio
+import sys
+
+import click
+from loguru import logger
+
+from uijit.models import CanvasConfig, CanvasSize, CanvasSizePreset
+from uijit.server import run_server
+
+# Available size presets for CLI help
+SIZE_PRESETS = [p.value for p in CanvasSizePreset]
+
+
+def setup_logging(verbose: bool = False) -> None:
+    """Configure logging."""
+    logger.remove()  # Remove default handler
+
+    level = "DEBUG" if verbose else "INFO"
+    format_str = (
+        "<green>{time:HH:mm:ss}</green> | "
+        "<level>{level: <8}</level> | "
+        "<cyan>{name}</cyan>:<cyan>{function}</cyan> - "
+        "<level>{message}</level>"
+    )
+
+    logger.add(sys.stderr, format=format_str, level=level, colorize=True)
+
+
+@click.command()
+@click.option(
+    "--host",
+    default="0.0.0.0",
+    help="Host to bind the web server to",
+)
+@click.option(
+    "--port",
+    default=8080,
+    type=int,
+    help="Port for the web server",
+)
+@click.option(
+    "--external-host",
+    default=None,
+    help="External hostname/IP for URLs (auto-detected if not specified)",
+)
+@click.option(
+    "--persistence-path",
+    default="~/.uijit/surfaces/",
+    help="Path to store canvas state",
+)
+@click.option(
+    "--no-persistence",
+    is_flag=True,
+    help="Disable state persistence",
+)
+@click.option(
+    "--receiver-url",
+    default=None,
+    help="URL of the external Chromecast receiver app",
+)
+@click.option(
+    "--cast-app-id",
+    default=None,
+    help="Google Cast application ID",
+)
+@click.option(
+    "--default-size",
+    default="tv_1080p",
+    type=click.Choice(SIZE_PRESETS, case_sensitive=False),
+    help="Default canvas size preset for new surfaces",
+)
+@click.option(
+    "--transport",
+    default="stdio",
+    type=click.Choice(["stdio", "sse"], case_sensitive=False),
+    help="MCP transport type (stdio for local, sse for remote)",
+)
+@click.option(
+    "--mcp-port",
+    default=3001,
+    type=int,
+    help="Port for SSE MCP endpoint (only used with --transport=sse)",
+)
+@click.option(
+    "-v", "--verbose",
+    is_flag=True,
+    help="Enable verbose logging",
+)
+def main(
+    host: str,
+    port: int,
+    external_host: str | None,
+    persistence_path: str,
+    no_persistence: bool,
+    receiver_url: str | None,
+    cast_app_id: str | None,
+    default_size: str,
+    transport: str,
+    mcp_port: int,
+    verbose: bool,
+) -> None:
+    """uijit MCP Server - A2UI rendering for AI agents.
+
+    This server provides MCP tools for creating and managing A2UI canvas
+    surfaces that can be displayed in browsers or cast to Chromecast devices.
+
+    Example usage with nanobot:
+
+        Add to ~/.nanobot/config.json:
+
+        {
+          "tools": {
+            "mcpServers": {
+              "uijit": {
+                "command": "uijit",
+                "args": ["--port", "8080"]
+              }
+            }
+          }
+        }
+    """
+    setup_logging(verbose)
+
+    config = CanvasConfig(
+        host=host,
+        port=port,
+        external_host=external_host,
+        persistence_enabled=not no_persistence,
+        persistence_path=persistence_path,
+        default_size=CanvasSize.from_preset(default_size),
+        receiver_url=receiver_url,
+        cast_app_id=cast_app_id,
+    )
+
+    logger.info(f"Starting uijit MCP Server on {host}:{port} (default size: {default_size})")
+    if transport == "sse":
+        logger.info(f"MCP transport: SSE on port {mcp_port}")
+    else:
+        logger.info("MCP transport: stdio")
+
+    try:
+        asyncio.run(run_server(config, transport=transport, mcp_port=mcp_port))
+    except KeyboardInterrupt:
+        logger.info("Interrupted by user")
+
+
+if __name__ == "__main__":
+    main()
